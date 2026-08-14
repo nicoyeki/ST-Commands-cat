@@ -273,11 +273,65 @@ function createPanel() {
   render();
 }
 
+
+function positionPanelNearCat() {
+  const p = document.getElementById(`${ID}_panel`);
+  const wrap = document.getElementById(`${ID}_wrap`);
+  if (!p || !wrap || p.hidden) return;
+
+  const gap = 10;
+  const margin = 8;
+  const r = wrap.getBoundingClientRect();
+
+  // Let CSS provide the size first.
+  p.style.left = 'auto';
+  p.style.right = 'auto';
+  p.style.top = 'auto';
+  p.style.bottom = 'auto';
+  p.style.transform = 'none';
+
+  const panelWidth = Math.min(window.innerWidth - margin * 2, 520);
+  p.style.width = `${panelWidth}px`;
+
+  // Available space around the cat.
+  const below = window.innerHeight - r.bottom - gap - margin;
+  const above = r.top - gap - margin;
+
+  const preferredHeight = Math.min(window.innerHeight * 0.62, 560);
+  const useBelow = below >= 240 || below >= above;
+
+  let top;
+  let maxHeight;
+
+  if (useBelow) {
+    top = r.bottom + gap;
+    maxHeight = Math.max(180, below);
+  } else {
+    maxHeight = Math.max(180, above);
+    top = r.top - gap - Math.min(preferredHeight, maxHeight);
+  }
+
+  // Horizontal alignment follows cat, but clamp to screen.
+  let left = r.left;
+  if (left + panelWidth > window.innerWidth - margin) {
+    left = window.innerWidth - panelWidth - margin;
+  }
+  left = Math.max(margin, left);
+
+  p.style.left = `${left}px`;
+  p.style.top = `${Math.max(margin, top)}px`;
+  p.style.maxHeight = `${Math.min(preferredHeight, maxHeight)}px`;
+  p.style.bottom = 'auto';
+}
+
 function togglePanel() {
   const p = document.getElementById(`${ID}_panel`);
   if (!p) return;
   p.hidden = !p.hidden;
-  if (!p.hidden) render();
+  if (!p.hidden) {
+    render();
+    requestAnimationFrame(positionPanelNearCat);
+  }
 }
 
 function createFloatingButton() {
@@ -325,6 +379,7 @@ function createFloatingButton() {
   function moveDrag(x, y) {
     if (!dragging) return;
     placeWrap(wrap, bx + (x - sx), by + (y - sy));
+    positionPanelNearCat();
   }
 
   function endDrag() {
@@ -382,6 +437,15 @@ function bindSendHooks() {
     }
   }, true);
 }
+
+
+window.addEventListener('resize', () => {
+  positionPanelNearCat();
+});
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(positionPanelNearCat, 120);
+});
 
 function boot() {
   createFloatingButton();

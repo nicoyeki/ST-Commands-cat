@@ -56,12 +56,10 @@
 
 #st_quick_commands_cat_panel{
   position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
   width:min(92vw,520px);
-  max-height:78vh;
+  max-height:62vh;
   overflow:auto;
+  -webkit-overflow-scrolling:touch;
   box-sizing:border-box;
   padding:14px;
   border:1px solid rgba(169,196,244,.55);
@@ -167,8 +165,8 @@
 
 @media (max-width:520px){
   #st_quick_commands_cat_panel{
-    width:94vw;
-    max-height:76vh;
+    width:min(94vw,520px);
+    max-height:60vh;
     padding:12px;
   }
 
