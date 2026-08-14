@@ -1,0 +1,11 @@
+{
+  "display_name": "ST Quick Commands Cat",
+  "loading_order": 50,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "ChatGPT",
+  "version": "1.2.0",
+  "homePage": ""
+}
