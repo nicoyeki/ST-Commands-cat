@@ -1,90 +1,183 @@
+#st_quick_commands_cat_wrap{
+  position:fixed;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  width:78px;
+  height:58px;
+  z-index:10050;
+  pointer-events:auto;
+}
 
 #st_quick_commands_cat_button{
- position:fixed;width:54px;height:54px;padding:4px;border-radius:50%;
- border:2px solid rgba(255,255,255,.9);
- background:#A9C4F4;
- box-shadow:0 4px 16px rgba(0,0,0,.38);
- z-index:99998;touch-action:none;user-select:none;-webkit-user-select:none;
- cursor:grab;opacity:.96;
+  width:54px;
+  height:54px;
+  min-width:54px;
+  min-height:54px;
+  padding:5px;
+  margin:0;
+  border:0;
+  border-radius:50%;
+  background:#A9C4F4;
+  box-shadow:0 4px 14px rgba(0,0,0,.32);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
-#st_quick_commands_cat_button:active{cursor:grabbing;transform:scale(.96)}
-#st_quick_commands_cat_button svg{display:block;width:100%;height:100%}
+
+#st_quick_commands_cat_button svg{
+  width:46px;
+  height:46px;
+  pointer-events:none;
+}
+
+#st_quick_commands_cat_drag{
+  width:18px;
+  height:38px;
+  min-width:18px;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:10px;
+  background:rgba(169,196,244,.92);
+  color:#5f7194;
+  font-size:20px;
+  line-height:38px;
+  text-align:center;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  cursor:grab;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
 
 #st_quick_commands_cat_panel{
- position:fixed;display:none;left:10px;right:10px;bottom:78px;
- max-height:72vh;overflow:auto;z-index:99999;padding:12px;
- color:#26344d;background:rgba(238,244,255,.985);
- border:2px solid #A9C4F4;border-radius:16px;
- box-shadow:0 12px 36px rgba(0,0,0,.45);font-size:14px;
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(92vw,520px);
+  max-height:78vh;
+  overflow:auto;
+  box-sizing:border-box;
+  padding:14px;
+  border:1px solid rgba(169,196,244,.55);
+  border-radius:14px;
+  background:rgba(20,23,31,.97);
+  color:#f4f6fb;
+  z-index:10060;
+  box-shadow:0 14px 40px rgba(0,0,0,.48);
+  font-size:14px;
 }
-#st_quick_commands_cat_panel.open{display:block}
-#st_quick_commands_cat_panel .sq-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:16px}
-#st_quick_commands_cat_panel label{display:block;margin:7px 0}
+
+#st_quick_commands_cat_panel[hidden]{
+  display:none !important;
+}
+
+#st_quick_commands_cat_panel .sq-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+  font-size:16px;
+}
+
+#st_quick_commands_cat_panel button,
+#st_quick_commands_cat_panel input,
+#st_quick_commands_cat_panel textarea{
+  font:inherit;
+}
+
 #st_quick_commands_cat_panel button{
- color:#26344d;background:#A9C4F4;border:1px solid #829fd1;border-radius:8px;padding:5px 8px
-}
-#st_quick_commands_cat_panel .sq-actions{display:flex;gap:6px;margin:10px 0}
-#st_quick_commands_cat_panel .sq-rule{background:rgba(169,196,244,.18);border:1px solid #A9C4F4;border-radius:10px;padding:8px;margin:8px 0}
-#st_quick_commands_cat_panel .sq-row{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:5px;align-items:center;margin-bottom:6px}
-#st_quick_commands_cat_panel input.title,#st_quick_commands_cat_panel textarea{
- box-sizing:border-box;width:100%;color:#26344d;background:#fff;border:1px solid #b6c9ea;border-radius:8px;padding:7px
-}
-#st_quick_commands_cat_panel textarea{min-height:82px;resize:vertical;line-height:1.45}
-#sq-importbox{display:none!important;min-height:110px;margin-bottom:8px}
-#sq-importbox.open{display:block!important}
-@media(min-width:720px){#st_quick_commands_cat_panel{left:16px;right:auto;width:min(540px,calc(100vw - 32px))}}
-
-#st_quick_commands_cat_button.dragging{
-  transform:scale(1.06);
-  box-shadow:0 6px 22px rgba(0,0,0,.5);
-  opacity:1;
+  border:1px solid rgba(169,196,244,.5);
+  border-radius:8px;
+  background:#252a36;
+  color:#f4f6fb;
+  padding:6px 9px;
 }
 
-#st_quick_commands_cat_wrap{
- position:fixed;
- width:74px;
- height:56px;
- z-index:99998;
- display:flex;
- align-items:center;
- gap:4px;
+#st_quick_commands_cat_panel .sq-close{
+  width:34px;
+  height:34px;
+  padding:0;
+  font-size:22px;
 }
-#st_quick_commands_cat_button{
- position:static !important;
- width:54px !important;
- height:54px !important;
- flex:0 0 54px;
- cursor:pointer !important;
- touch-action:manipulation !important;
-}
-#st_quick_commands_cat_drag{
- width:16px;
- height:38px;
- padding:0;
- border:none;
- border-radius:10px;
- background:#A9C4F4;
- color:#5f7194;
- font-size:12px;
- line-height:38px;
- touch-action:none;
- cursor:grab;
- box-shadow:0 2px 8px rgba(0,0,0,.25);
-}
-#st_quick_commands_cat_drag:active{cursor:grabbing}
 
-/* v1.6: force above SillyTavern overlays */
-#st_quick_commands_cat_wrap{
-  z-index:2147483646 !important;
-  pointer-events:auto !important;
+#st_quick_commands_cat_panel .sq-check{
+  display:block;
+  margin:8px 0;
 }
-#st_quick_commands_cat_button,
-#st_quick_commands_cat_drag{
-  pointer-events:auto !important;
-  position:relative !important;
-  z-index:2147483647 !important;
+
+#st_quick_commands_cat_panel .sq-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:10px 0;
 }
-#st_quick_commands_cat_panel{
-  z-index:2147483647 !important;
-  pointer-events:auto !important;
+
+#st_quick_commands_cat_panel #sq-importbox{
+  display:none;
+  width:100%;
+  min-height:90px;
+  box-sizing:border-box;
+  margin:8px 0 12px;
+}
+
+#st_quick_commands_cat_panel #sq-importbox.open{
+  display:block;
+}
+
+#st_quick_commands_cat_panel .sq-rule{
+  padding:10px 0;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+
+#st_quick_commands_cat_panel .sq-row{
+  display:grid;
+  grid-template-columns:auto minmax(90px,1fr) auto auto auto;
+  gap:6px;
+  align-items:center;
+}
+
+#st_quick_commands_cat_panel .sq-use{
+  white-space:nowrap;
+}
+
+#st_quick_commands_cat_panel .title,
+#st_quick_commands_cat_panel .txt,
+#st_quick_commands_cat_panel #sq-importbox{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:8px;
+  background:#11151d;
+  color:#f4f6fb;
+  padding:8px;
+}
+
+#st_quick_commands_cat_panel .txt{
+  min-height:92px;
+  margin-top:7px;
+  resize:vertical;
+}
+
+@media (max-width:520px){
+  #st_quick_commands_cat_panel{
+    width:94vw;
+    max-height:76vh;
+    padding:12px;
+  }
+
+  #st_quick_commands_cat_panel .sq-row{
+    grid-template-columns:auto minmax(70px,1fr) auto auto auto;
+    gap:4px;
+  }
+
+  #st_quick_commands_cat_panel button{
+    padding:6px 7px;
+  }
 }
