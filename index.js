@@ -86,7 +86,7 @@ function panel(){
  <textarea id="sq-importbox" placeholder="貼上 JSON，再按一次匯入"></textarea>
  <div id="sq-list"></div>`;
  document.body.appendChild(p);
- p.querySelector('.sq-close').onclick=()=>{p.classList.remove('open');p.style.display='none'};
+ p.querySelector('.sq-close').onclick=()=>{p.setAttribute('data-open','0');p.classList.remove('open');p.style.setProperty('display','none','important')};
  p.querySelector('#sq-enabled').onchange=e=>{state.enabled=e.target.checked;save()};
  p.querySelector('#sq-restore').onchange=e=>{state.restoreInputAfterSend=e.target.checked;save()};
  p.querySelector('#sq-add').onclick=()=>{state.rules.push({id:String(Date.now()),title:'新指令',enabled:true,text:'$指令：'});save();render()};
@@ -124,102 +124,107 @@ function render(){
 }
 function toggle(){
  const p=document.getElementById(ID+'_panel');
- if(!p)return;
- const opening=!p.classList.contains('open');
- p.classList.toggle('open',opening);
- p.style.display=opening?'block':'none';
- if(opening)render();
+ if(!p){alert('快捷指令面板未建立');return;}
+ const open=p.getAttribute('data-open')==='1';
+ if(open){
+   p.setAttribute('data-open','0');
+   p.classList.remove('open');
+   p.style.setProperty('display','none','important');
+ }else{
+   p.setAttribute('data-open','1');
+   p.classList.add('open');
+   p.style.setProperty('display','block','important');
+   p.style.setProperty('visibility','visible','important');
+   p.style.setProperty('opacity','1','important');
+   render();
+ }
+}
+
+function placeWrap(w,x,y){
+ const width=74,height=56;
+ x=Math.max(8,Math.min(innerWidth-width-8,x));
+ y=Math.max(8,Math.min(innerHeight-height-8,y));
+ w.style.left=x+'px';
+ w.style.top=y+'px';
+ localStorage.setItem(POS,JSON.stringify({x,y}));
 }
 function button(){
  if(document.getElementById(ID+'_button'))return;
  panel();
 
- const b=document.createElement('button');
- b.id=ID+'_button';
- b.type='button';
- b.innerHTML=catSVG();
- b.setAttribute('aria-label','快捷指令');
- document.body.appendChild(b);
+ const wrap=document.createElement('div');
+ wrap.id=ID+'_wrap';
+ wrap.innerHTML=`
+   <button id="${ID}_button" type="button" aria-label="快捷指令">${catSVG()}</button>
+   <button id="${ID}_drag" type="button" aria-label="拖動">🐾</button>
+ `;
+ document.body.appendChild(wrap);
+
+ const b=wrap.querySelector('#'+ID+'_button');
+ const d=wrap.querySelector('#'+ID+'_drag');
 
  const q=pos();
- place(b,q?.x??innerWidth-70,q?.y??Math.max(100,innerHeight-250));
+ const x=q?.x??innerWidth-82;
+ const y=q?.y??Math.max(100,innerHeight-260);
+ placeWrap(wrap,x,y);
 
- // v1.4 interaction:
- // normal tap/click opens panel;
- // press-and-hold for 320ms enters drag mode.
- let holdTimer=null;
- let dragMode=false;
- let startX=0,startY=0,baseX=0,baseY=0;
- let activePointer=null;
- let suppressClick=false;
-
- function clearHold(){
-   if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }
- }
-
- function begin(e){
-   if(activePointer!==null)return;
-   activePointer=e.pointerId;
-   dragMode=false;
-   suppressClick=false;
-   startX=e.clientX;
-   startY=e.clientY;
-   const r=b.getBoundingClientRect();
-   baseX=r.left;
-   baseY=r.top;
-
-   holdTimer=setTimeout(()=>{
-     dragMode=true;
-     suppressClick=true;
-     b.classList.add('dragging');
-     try{b.setPointerCapture(activePointer)}catch{}
-     if(navigator.vibrate) navigator.vibrate(15);
-   },320);
- }
-
- function move(e){
-   if(e.pointerId!==activePointer)return;
-   const dx=e.clientX-startX, dy=e.clientY-startY;
-
-   // Small finger wobble should still count as a tap.
-   if(!dragMode && Math.hypot(dx,dy)>12){
-     clearHold();
-   }
-
-   if(dragMode){
-     e.preventDefault();
-     place(b,baseX+dx,baseY+dy);
-   }
- }
-
- function finish(e){
-   if(e.pointerId!==activePointer)return;
-   clearHold();
-
-   if(dragMode){
-     e.preventDefault();
-     suppressClick=true;
-     b.classList.remove('dragging');
-     try{b.releasePointerCapture(activePointer)}catch{}
-     setTimeout(()=>{suppressClick=false},350);
-   }
-
-   dragMode=false;
-   activePointer=null;
- }
-
- b.addEventListener('pointerdown',begin,{passive:true});
- b.addEventListener('pointermove',move,{passive:false});
- b.addEventListener('pointerup',finish,{passive:false});
- b.addEventListener('pointercancel',finish,{passive:false});
-
- // Ordinary tap is intentionally simple in v1.4.
+ // v1.5: the cat button is click-only.
+ // Dragging is handled by a separate paw handle, so tap can never be confused with drag.
  b.addEventListener('click',e=>{
    e.preventDefault();
    e.stopPropagation();
-   if(suppressClick)return;
    toggle();
- },false);
+ });
+
+ let dragging=false, sx=0, sy=0, bx=0, by=0, pointerId=null;
+
+ d.addEventListener('pointerdown',e=>{
+   dragging=true;
+   pointerId=e.pointerId;
+   sx=e.clientX;
+   sy=e.clientY;
+   const r=wrap.getBoundingClientRect();
+   bx=r.left;
+   by=r.top;
+   try{d.setPointerCapture(pointerId)}catch{}
+   e.preventDefault();
+   e.stopPropagation();
+ });
+
+ d.addEventListener('pointermove',e=>{
+   if(!dragging||e.pointerId!==pointerId)return;
+   e.preventDefault();
+   e.stopPropagation();
+   placeWrap(wrap,bx+(e.clientX-sx),by+(e.clientY-sy));
+ });
+
+ const finish=e=>{
+   if(!dragging)return;
+   dragging=false;
+   try{d.releasePointerCapture(pointerId)}catch{}
+   pointerId=null;
+   e.preventDefault();
+   e.stopPropagation();
+ };
+ d.addEventListener('pointerup',finish);
+ d.addEventListener('pointercancel',finish);
+
+ // Extra fallback for iOS/WebKit: touch events only on the drag handle.
+ let tx=0,ty=0,tbx=0,tby=0,touching=false;
+ d.addEventListener('touchstart',e=>{
+   if(e.touches.length!==1)return;
+   touching=true;
+   const t=e.touches[0],r=wrap.getBoundingClientRect();
+   tx=t.clientX;ty=t.clientY;tbx=r.left;tby=r.top;
+ },{passive:true});
+ d.addEventListener('touchmove',e=>{
+   if(!touching||e.touches.length!==1)return;
+   const t=e.touches[0];
+   e.preventDefault();
+   placeWrap(wrap,tbx+(t.clientX-tx),tby+(t.clientY-ty));
+ },{passive:false});
+ d.addEventListener('touchend',()=>{touching=false},{passive:true});
+ d.addEventListener('touchcancel',()=>{touching=false},{passive:true});
 }
 function bind(){
  document.addEventListener('click',e=>{

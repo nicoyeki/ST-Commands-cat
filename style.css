@@ -39,3 +39,36 @@
   box-shadow:0 6px 22px rgba(0,0,0,.5);
   opacity:1;
 }
+
+#st_quick_commands_cat_wrap{
+ position:fixed;
+ width:74px;
+ height:56px;
+ z-index:99998;
+ display:flex;
+ align-items:center;
+ gap:4px;
+}
+#st_quick_commands_cat_button{
+ position:static !important;
+ width:54px !important;
+ height:54px !important;
+ flex:0 0 54px;
+ cursor:pointer !important;
+ touch-action:manipulation !important;
+}
+#st_quick_commands_cat_drag{
+ width:16px;
+ height:38px;
+ padding:0;
+ border:none;
+ border-radius:10px;
+ background:#A9C4F4;
+ color:#5f7194;
+ font-size:12px;
+ line-height:38px;
+ touch-action:none;
+ cursor:grab;
+ box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+#st_quick_commands_cat_drag:active{cursor:grabbing}
