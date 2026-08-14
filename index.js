@@ -47,6 +47,13 @@ function getActiveCommands() {
     .join('\n');
 }
 
+function getCheckedCommands() {
+  return state.rules
+    .filter(r => r.enabled && String(r.text || '').trim())
+    .map(r => String(r.text).trim())
+    .join('\n');
+}
+
 function getInput() {
   return document.querySelector('#send_textarea')
       || document.querySelector('textarea#send_textarea')
@@ -87,14 +94,14 @@ function injectCommands() {
 
 function manualInsertCommands() {
   const el = getInput();
-  const cmd = getActiveCommands();
+  const cmd = getCheckedCommands();
 
   if (!el) {
     alert('找不到輸入框');
     return;
   }
   if (!cmd) {
-    alert('目前沒有已啟用的指令');
+    alert('目前沒有已勾選「用」的指令');
     return;
   }
   if (el.value.includes('<!-- ST_QUICK_COMMANDS -->')) {
