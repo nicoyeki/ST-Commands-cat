@@ -33,3 +33,9 @@
 #sq-importbox{display:none!important;min-height:110px;margin-bottom:8px}
 #sq-importbox.open{display:block!important}
 @media(min-width:720px){#st_quick_commands_cat_panel{left:16px;right:auto;width:min(540px,calc(100vw - 32px))}}
+
+#st_quick_commands_cat_button.dragging{
+  transform:scale(1.06);
+  box-shadow:0 6px 22px rgba(0,0,0,.5);
+  opacity:1;
+}

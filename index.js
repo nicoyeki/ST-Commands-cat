@@ -86,7 +86,7 @@ function panel(){
  <textarea id="sq-importbox" placeholder="貼上 JSON，再按一次匯入"></textarea>
  <div id="sq-list"></div>`;
  document.body.appendChild(p);
- p.querySelector('.sq-close').onclick=()=>p.classList.remove('open');
+ p.querySelector('.sq-close').onclick=()=>{p.classList.remove('open');p.style.display='none'};
  p.querySelector('#sq-enabled').onchange=e=>{state.enabled=e.target.checked;save()};
  p.querySelector('#sq-restore').onchange=e=>{state.restoreInputAfterSend=e.target.checked;save()};
  p.querySelector('#sq-add').onclick=()=>{state.rules.push({id:String(Date.now()),title:'新指令',enabled:true,text:'$指令：'});save();render()};
@@ -123,58 +123,103 @@ function render(){
  });
 }
 function toggle(){
- const p=document.getElementById(ID+'_panel');if(p){p.classList.toggle('open');render()}
+ const p=document.getElementById(ID+'_panel');
+ if(!p)return;
+ const opening=!p.classList.contains('open');
+ p.classList.toggle('open',opening);
+ p.style.display=opening?'block':'none';
+ if(opening)render();
 }
 function button(){
  if(document.getElementById(ID+'_button'))return;
  panel();
- const b=document.createElement('button');b.id=ID+'_button';b.type='button';b.innerHTML=catSVG();document.body.appendChild(b);
- const q=pos();place(b,q?.x??innerWidth-70,q?.y??Math.max(100,innerHeight-250));
 
- const threshold=8;
- let touchActive=false,touchMoved=false,tsx=0,tsy=0,tbx=0,tby=0;
+ const b=document.createElement('button');
+ b.id=ID+'_button';
+ b.type='button';
+ b.innerHTML=catSVG();
+ b.setAttribute('aria-label','快捷指令');
+ document.body.appendChild(b);
 
- b.addEventListener('touchstart',e=>{
-  if(e.touches.length!==1)return;
-  const t=e.touches[0],r=b.getBoundingClientRect();
-  touchActive=true;touchMoved=false;tsx=t.clientX;tsy=t.clientY;tbx=r.left;tby=r.top;
- },{passive:true});
+ const q=pos();
+ place(b,q?.x??innerWidth-70,q?.y??Math.max(100,innerHeight-250));
 
- b.addEventListener('touchmove',e=>{
-  if(!touchActive||e.touches.length!==1)return;
-  const t=e.touches[0],dx=t.clientX-tsx,dy=t.clientY-tsy;
-  if(Math.hypot(dx,dy)>=threshold)touchMoved=true;
-  if(touchMoved){e.preventDefault();place(b,tbx+dx,tby+dy)}
- },{passive:false});
+ // v1.4 interaction:
+ // normal tap/click opens panel;
+ // press-and-hold for 320ms enters drag mode.
+ let holdTimer=null;
+ let dragMode=false;
+ let startX=0,startY=0,baseX=0,baseY=0;
+ let activePointer=null;
+ let suppressClick=false;
 
- b.addEventListener('touchend',e=>{
-  if(!touchActive)return;
-  const wasMoved=touchMoved;touchActive=false;touchMoved=false;
-  e.preventDefault();e.stopPropagation();
-  if(!wasMoved)toggle();
- },{passive:false});
+ function clearHold(){
+   if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }
+ }
 
- b.addEventListener('touchcancel',()=>{touchActive=false;touchMoved=false});
+ function begin(e){
+   if(activePointer!==null)return;
+   activePointer=e.pointerId;
+   dragMode=false;
+   suppressClick=false;
+   startX=e.clientX;
+   startY=e.clientY;
+   const r=b.getBoundingClientRect();
+   baseX=r.left;
+   baseY=r.top;
 
- let mouseActive=false,mouseMoved=false,msx=0,msy=0,mbx=0,mby=0;
- b.addEventListener('mousedown',e=>{
-  if(e.button!==0)return;
-  const r=b.getBoundingClientRect();
-  mouseActive=true;mouseMoved=false;msx=e.clientX;msy=e.clientY;mbx=r.left;mby=r.top;
-  e.preventDefault();
- });
- document.addEventListener('mousemove',e=>{
-  if(!mouseActive)return;
-  const dx=e.clientX-msx,dy=e.clientY-msy;
-  if(Math.hypot(dx,dy)>=threshold)mouseMoved=true;
-  if(mouseMoved)place(b,mbx+dx,mby+dy);
- });
- document.addEventListener('mouseup',()=>{
-  if(!mouseActive)return;
-  const wasMoved=mouseMoved;mouseActive=false;mouseMoved=false;
-  if(!wasMoved)toggle();
- });
- b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
+   holdTimer=setTimeout(()=>{
+     dragMode=true;
+     suppressClick=true;
+     b.classList.add('dragging');
+     try{b.setPointerCapture(activePointer)}catch{}
+     if(navigator.vibrate) navigator.vibrate(15);
+   },320);
+ }
+
+ function move(e){
+   if(e.pointerId!==activePointer)return;
+   const dx=e.clientX-startX, dy=e.clientY-startY;
+
+   // Small finger wobble should still count as a tap.
+   if(!dragMode && Math.hypot(dx,dy)>12){
+     clearHold();
+   }
+
+   if(dragMode){
+     e.preventDefault();
+     place(b,baseX+dx,baseY+dy);
+   }
+ }
+
+ function finish(e){
+   if(e.pointerId!==activePointer)return;
+   clearHold();
+
+   if(dragMode){
+     e.preventDefault();
+     suppressClick=true;
+     b.classList.remove('dragging');
+     try{b.releasePointerCapture(activePointer)}catch{}
+     setTimeout(()=>{suppressClick=false},350);
+   }
+
+   dragMode=false;
+   activePointer=null;
+ }
+
+ b.addEventListener('pointerdown',begin,{passive:true});
+ b.addEventListener('pointermove',move,{passive:false});
+ b.addEventListener('pointerup',finish,{passive:false});
+ b.addEventListener('pointercancel',finish,{passive:false});
+
+ // Ordinary tap is intentionally simple in v1.4.
+ b.addEventListener('click',e=>{
+   e.preventDefault();
+   e.stopPropagation();
+   if(suppressClick)return;
+   toggle();
+ },false);
 }
 function bind(){
  document.addEventListener('click',e=>{
