@@ -72,3 +72,19 @@
  box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
 #st_quick_commands_cat_drag:active{cursor:grabbing}
+
+/* v1.6: force above SillyTavern overlays */
+#st_quick_commands_cat_wrap{
+  z-index:2147483646 !important;
+  pointer-events:auto !important;
+}
+#st_quick_commands_cat_button,
+#st_quick_commands_cat_drag{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:2147483647 !important;
+}
+#st_quick_commands_cat_panel{
+  z-index:2147483647 !important;
+  pointer-events:auto !important;
+}

@@ -126,19 +126,14 @@ function toggle(){
  const p=document.getElementById(ID+'_panel');
  if(!p){alert('快捷指令面板未建立');return;}
  const open=p.getAttribute('data-open')==='1';
- if(open){
-   p.setAttribute('data-open','0');
-   p.classList.remove('open');
-   p.style.setProperty('display','none','important');
- }else{
-   p.setAttribute('data-open','1');
-   p.classList.add('open');
-   p.style.setProperty('display','block','important');
-   p.style.setProperty('visibility','visible','important');
-   p.style.setProperty('opacity','1','important');
-   render();
- }
+ p.setAttribute('data-open',open?'0':'1');
+ p.classList.toggle('open',!open);
+ p.style.setProperty('display',open?'none':'block','important');
+ p.style.setProperty('visibility',open?'hidden':'visible','important');
+ p.style.setProperty('opacity',open?'0':'1','important');
+ if(!open)render();
 }
+window.STQuickCommandsCatToggle=toggle;
 
 function placeWrap(w,x,y){
  const width=74,height=56;
@@ -164,67 +159,55 @@ function button(){
  const d=wrap.querySelector('#'+ID+'_drag');
 
  const q=pos();
- const x=q?.x??innerWidth-82;
- const y=q?.y??Math.max(100,innerHeight-260);
- placeWrap(wrap,x,y);
+ placeWrap(wrap,q?.x??innerWidth-82,q?.y??Math.max(100,innerHeight-260));
 
- // v1.5: the cat button is click-only.
- // Dragging is handled by a separate paw handle, so tap can never be confused with drag.
- b.addEventListener('click',e=>{
-   e.preventDefault();
-   e.stopPropagation();
+ // v1.6: multiple independent tap paths for iOS Chrome/WebKit.
+ const openPanel = (e)=>{
+   if(e){
+     e.preventDefault?.();
+     e.stopPropagation?.();
+     e.stopImmediatePropagation?.();
+   }
    toggle();
- });
-
- let dragging=false, sx=0, sy=0, bx=0, by=0, pointerId=null;
-
- d.addEventListener('pointerdown',e=>{
-   dragging=true;
-   pointerId=e.pointerId;
-   sx=e.clientX;
-   sy=e.clientY;
-   const r=wrap.getBoundingClientRect();
-   bx=r.left;
-   by=r.top;
-   try{d.setPointerCapture(pointerId)}catch{}
-   e.preventDefault();
-   e.stopPropagation();
- });
-
- d.addEventListener('pointermove',e=>{
-   if(!dragging||e.pointerId!==pointerId)return;
-   e.preventDefault();
-   e.stopPropagation();
-   placeWrap(wrap,bx+(e.clientX-sx),by+(e.clientY-sy));
- });
-
- const finish=e=>{
-   if(!dragging)return;
-   dragging=false;
-   try{d.releasePointerCapture(pointerId)}catch{}
-   pointerId=null;
-   e.preventDefault();
-   e.stopPropagation();
+   return false;
  };
- d.addEventListener('pointerup',finish);
- d.addEventListener('pointercancel',finish);
 
- // Extra fallback for iOS/WebKit: touch events only on the drag handle.
- let tx=0,ty=0,tbx=0,tby=0,touching=false;
+ // Direct DOM properties
+ b.onclick=openPanel;
+ b.ontouchend=openPanel;
+
+ // Explicit listeners
+ b.addEventListener('click',openPanel,{capture:true});
+ b.addEventListener('touchend',openPanel,{capture:true,passive:false});
+
+ // Drag only on paw handle
+ let dragging=false,sx=0,sy=0,bx=0,by=0;
+ const startDrag=(x,y)=>{
+   dragging=true;sx=x;sy=y;
+   const r=wrap.getBoundingClientRect();bx=r.left;by=r.top;
+ };
+ const doDrag=(x,y)=>{ if(dragging)placeWrap(wrap,bx+(x-sx),by+(y-sy)); };
+ const stopDrag=()=>{dragging=false};
+
  d.addEventListener('touchstart',e=>{
    if(e.touches.length!==1)return;
-   touching=true;
-   const t=e.touches[0],r=wrap.getBoundingClientRect();
-   tx=t.clientX;ty=t.clientY;tbx=r.left;tby=r.top;
+   const t=e.touches[0];startDrag(t.clientX,t.clientY);
  },{passive:true});
  d.addEventListener('touchmove',e=>{
-   if(!touching||e.touches.length!==1)return;
-   const t=e.touches[0];
+   if(!dragging||e.touches.length!==1)return;
    e.preventDefault();
-   placeWrap(wrap,tbx+(t.clientX-tx),tby+(t.clientY-ty));
+   const t=e.touches[0];doDrag(t.clientX,t.clientY);
  },{passive:false});
- d.addEventListener('touchend',()=>{touching=false},{passive:true});
- d.addEventListener('touchcancel',()=>{touching=false},{passive:true});
+ d.addEventListener('touchend',stopDrag,{passive:true});
+ d.addEventListener('touchcancel',stopDrag,{passive:true});
+
+ d.addEventListener('mousedown',e=>{
+   if(e.button!==0)return;
+   startDrag(e.clientX,e.clientY);
+   e.preventDefault();
+ });
+ document.addEventListener('mousemove',e=>{if(dragging)doDrag(e.clientX,e.clientY)});
+ document.addEventListener('mouseup',stopDrag);
 }
 function bind(){
  document.addEventListener('click',e=>{
@@ -234,6 +217,26 @@ function bind(){
   const x=ta();if(x&&e.target===x&&e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey)inject();
  },true);
 }
+
+// v1.6 document-level fallback: catches taps even if another SillyTavern handler interferes.
+document.addEventListener('touchend',e=>{
+ const target=e.target?.closest?.('#'+ID+'_button');
+ if(target){
+   e.preventDefault();
+   e.stopPropagation();
+   toggle();
+ }
+},{capture:true,passive:false});
+
+document.addEventListener('click',e=>{
+ const target=e.target?.closest?.('#'+ID+'_button');
+ if(target){
+   e.preventDefault();
+   e.stopPropagation();
+   toggle();
+ }
+},true);
+
 function boot(){
  button();bind();
  new MutationObserver(()=>button()).observe(document.body,{childList:true,subtree:true});
