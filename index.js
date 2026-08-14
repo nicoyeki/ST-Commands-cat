@@ -122,16 +122,49 @@ function render(){
   l.appendChild(n);
  });
 }
+
+function debugBox(msg){
+ let d=document.getElementById('stqc_debug_box');
+ if(!d){
+   d=document.createElement('div');
+   d.id='stqc_debug_box';
+   Object.assign(d.style,{
+     position:'fixed',left:'10px',right:'10px',top:'70px',
+     zIndex:'2147483647',background:'#111',color:'#fff',
+     padding:'12px',borderRadius:'10px',fontSize:'14px',
+     whiteSpace:'pre-wrap',fontFamily:'monospace',
+     boxShadow:'0 4px 20px rgba(0,0,0,.5)'
+   });
+   document.body.appendChild(d);
+ }
+ d.textContent += msg + '\n';
+}
+window.STQCDebug=debugBox;
+
 function toggle(){
- const p=document.getElementById(ID+'_panel');
- if(!p){alert('快捷指令面板未建立');return;}
- const open=p.getAttribute('data-open')==='1';
- p.setAttribute('data-open',open?'0':'1');
- p.classList.toggle('open',!open);
- p.style.setProperty('display',open?'none':'block','important');
- p.style.setProperty('visibility',open?'hidden':'visible','important');
- p.style.setProperty('opacity',open?'0':'1','important');
- if(!open)render();
+ try{
+  debugBox('TOGGLE START');
+  const p=document.getElementById(ID+'_panel');
+  debugBox('PANEL FOUND: '+(p?'YES':'NO'));
+  if(!p){alert('快捷指令面板未建立');return;}
+  const open=p.getAttribute('data-open')==='1';
+  debugBox('CURRENT OPEN: '+open);
+  p.setAttribute('data-open',open?'0':'1');
+  p.classList.toggle('open',!open);
+  p.style.setProperty('display',open?'none':'block','important');
+  p.style.setProperty('visibility',open?'hidden':'visible','important');
+  p.style.setProperty('opacity',open?'0':'1','important');
+  debugBox('DISPLAY SET: '+(open?'none':'block'));
+  if(!open){
+    debugBox('RENDER START');
+    render();
+    debugBox('RENDER OK');
+  }
+  debugBox('TOGGLE END');
+ }catch(err){
+  debugBox('ERROR: '+(err && (err.stack||err.message)||err));
+  alert('Quick Commands Error: '+(err?.message||err));
+ }
 }
 window.STQuickCommandsCatToggle=toggle;
 
@@ -144,6 +177,7 @@ function placeWrap(w,x,y){
  localStorage.setItem(POS,JSON.stringify({x,y}));
 }
 function button(){
+ debugBox('BUTTON() CALLED');
  if(document.getElementById(ID+'_button'))return;
  panel();
 
@@ -154,6 +188,7 @@ function button(){
    <button id="${ID}_drag" type="button" aria-label="拖動">🐾</button>
  `;
  document.body.appendChild(wrap);
+ debugBox('CAT BUTTON CREATED');
 
  const b=wrap.querySelector('#'+ID+'_button');
  const d=wrap.querySelector('#'+ID+'_drag');
@@ -163,6 +198,7 @@ function button(){
 
  // v1.6: multiple independent tap paths for iOS Chrome/WebKit.
  const openPanel = (e)=>{
+   debugBox('CAT HANDLER FIRED: '+(e?.type||'unknown'));
    if(e){
      e.preventDefault?.();
      e.stopPropagation?.();
@@ -217,25 +253,6 @@ function bind(){
   const x=ta();if(x&&e.target===x&&e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey)inject();
  },true);
 }
-
-// v1.6 document-level fallback: catches taps even if another SillyTavern handler interferes.
-document.addEventListener('touchend',e=>{
- const target=e.target?.closest?.('#'+ID+'_button');
- if(target){
-   e.preventDefault();
-   e.stopPropagation();
-   toggle();
- }
-},{capture:true,passive:false});
-
-document.addEventListener('click',e=>{
- const target=e.target?.closest?.('#'+ID+'_button');
- if(target){
-   e.preventDefault();
-   e.stopPropagation();
-   toggle();
- }
-},true);
 
 function boot(){
  button();bind();
