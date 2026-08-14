@@ -131,30 +131,51 @@ function button(){
  const b=document.createElement('button');b.id=ID+'_button';b.type='button';b.innerHTML=catSVG();document.body.appendChild(b);
  const q=pos();place(b,q?.x??innerWidth-70,q?.y??Math.max(100,innerHeight-250));
 
- let dragging=false, moved=false, sx=0,sy=0,bx=0,by=0, suppressClick=false;
- b.addEventListener('pointerdown',e=>{
-  dragging=true;moved=false;suppressClick=false;sx=e.clientX;sy=e.clientY;
-  const r=b.getBoundingClientRect();bx=r.left;by=r.top;
-  try{b.setPointerCapture(e.pointerId)}catch{}
- });
- b.addEventListener('pointermove',e=>{
-  if(!dragging)return;
-  const dx=e.clientX-sx,dy=e.clientY-sy;
-  if(Math.abs(dx)>5||Math.abs(dy)>5)moved=true;
-  if(moved){place(b,bx+dx,by+dy);e.preventDefault()}
- });
- b.addEventListener('pointerup',e=>{
-  if(!dragging)return;dragging=false;
-  try{b.releasePointerCapture(e.pointerId)}catch{}
-  if(moved){suppressClick=true;setTimeout(()=>suppressClick=false,250)}
- });
- // v1.2 fix: real click handler, separate from dragging.
- b.addEventListener('click',e=>{
-  if(suppressClick||moved){moved=false;return}
-  e.preventDefault();e.stopPropagation();toggle();
- });
-}
+ const threshold=8;
+ let touchActive=false,touchMoved=false,tsx=0,tsy=0,tbx=0,tby=0;
 
+ b.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1)return;
+  const t=e.touches[0],r=b.getBoundingClientRect();
+  touchActive=true;touchMoved=false;tsx=t.clientX;tsy=t.clientY;tbx=r.left;tby=r.top;
+ },{passive:true});
+
+ b.addEventListener('touchmove',e=>{
+  if(!touchActive||e.touches.length!==1)return;
+  const t=e.touches[0],dx=t.clientX-tsx,dy=t.clientY-tsy;
+  if(Math.hypot(dx,dy)>=threshold)touchMoved=true;
+  if(touchMoved){e.preventDefault();place(b,tbx+dx,tby+dy)}
+ },{passive:false});
+
+ b.addEventListener('touchend',e=>{
+  if(!touchActive)return;
+  const wasMoved=touchMoved;touchActive=false;touchMoved=false;
+  e.preventDefault();e.stopPropagation();
+  if(!wasMoved)toggle();
+ },{passive:false});
+
+ b.addEventListener('touchcancel',()=>{touchActive=false;touchMoved=false});
+
+ let mouseActive=false,mouseMoved=false,msx=0,msy=0,mbx=0,mby=0;
+ b.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  const r=b.getBoundingClientRect();
+  mouseActive=true;mouseMoved=false;msx=e.clientX;msy=e.clientY;mbx=r.left;mby=r.top;
+  e.preventDefault();
+ });
+ document.addEventListener('mousemove',e=>{
+  if(!mouseActive)return;
+  const dx=e.clientX-msx,dy=e.clientY-msy;
+  if(Math.hypot(dx,dy)>=threshold)mouseMoved=true;
+  if(mouseMoved)place(b,mbx+dx,mby+dy);
+ });
+ document.addEventListener('mouseup',()=>{
+  if(!mouseActive)return;
+  const wasMoved=mouseMoved;mouseActive=false;mouseMoved=false;
+  if(!wasMoved)toggle();
+ });
+ b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
+}
 function bind(){
  document.addEventListener('click',e=>{
   if(e.target?.closest?.('#send_but,#send_button,.send_but,[data-testid="send-button"]'))inject();
