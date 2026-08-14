@@ -70,7 +70,7 @@ function injectCommands() {
   if (!el || !cmd || !el.value.trim() || el.value.includes('<!-- ST_QUICK_COMMANDS -->')) return;
 
   oldText = el.value;
-  sentText = `<!-- ST_QUICK_COMMANDS -->\n${cmd}\n\n${oldText}`;
+  sentText = `${oldText}\n\n<!-- ST_QUICK_COMMANDS -->\n${cmd}`;
   injecting = true;
   setInputValue(el, sentText);
 
@@ -83,6 +83,32 @@ function injectCommands() {
     oldText = '';
     sentText = '';
   }, 1200);
+}
+
+function manualInsertCommands() {
+  const el = getInput();
+  const cmd = getActiveCommands();
+
+  if (!el) {
+    alert('找不到輸入框');
+    return;
+  }
+  if (!cmd) {
+    alert('目前沒有已啟用的指令');
+    return;
+  }
+  if (el.value.includes('<!-- ST_QUICK_COMMANDS -->')) {
+    alert('指令已經在輸入框內');
+    return;
+  }
+
+  const base = el.value.trimEnd();
+  const text = base
+    ? `${base}\n\n<!-- ST_QUICK_COMMANDS -->\n${cmd}`
+    : `<!-- ST_QUICK_COMMANDS -->\n${cmd}`;
+
+  setInputValue(el, text);
+  el.focus();
 }
 
 function catSVG() {
@@ -202,6 +228,7 @@ function createPanel() {
     <label class="sq-check"><input id="sq-restore" type="checkbox"> 發送後還原輸入框</label>
 
     <div class="sq-actions">
+      <button id="sq-manual" type="button">手動附加</button>
       <button id="sq-add" type="button">＋新增</button>
       <button id="sq-export" type="button">匯出</button>
       <button id="sq-import" type="button">匯入</button>
@@ -225,6 +252,10 @@ function createPanel() {
   p.querySelector('#sq-restore').addEventListener('change', e => {
     state.restoreInputAfterSend = e.target.checked;
     saveState();
+  });
+
+  p.querySelector('#sq-manual').addEventListener('click', () => {
+    manualInsertCommands();
   });
 
   p.querySelector('#sq-add').addEventListener('click', () => {
